@@ -31,3 +31,5 @@ The `playlist rotate` command allows you to select a playlist to update with tra
 ```sh
 spotify playlist rotate
 ```
+
+![img.png](img.png)
