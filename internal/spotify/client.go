@@ -74,24 +74,10 @@ func NewClient() *Client {
 	var client *spotify.Client
 	token, err := loadTokenFromConfig()
 	if err != nil || token == nil {
-		client, err = login()
+
+		client, user, err := loginUser()
 		if err != nil {
-			log.Fatalf("Failed to login: %v", err)
-		}
-
-		t, tErr := client.Token()
-		if tErr != nil {
-			log.Fatalf("Failed to get token: %v", tErr)
-		}
-
-		sErr := saveTokenToConfig(t)
-		if sErr != nil {
-			log.Fatalf("Failed to save token: %v", sErr)
-		}
-
-		user, uErr := client.CurrentUser(context.Background())
-		if uErr != nil {
-			log.Fatalf("Failed to get user: %v", err)
+			log.Fatalf("failed to login: %v", err)
 		}
 
 		return &Client{
@@ -118,7 +104,10 @@ func NewClient() *Client {
 
 	user, err := client.CurrentUser(context.Background())
 	if err != nil {
-		log.Fatalf("Failed to get user: %v", err)
+		client, user, err = loginUser()
+		if err != nil {
+			log.Fatalf("failed to login: %v", err)
+		}
 	}
 
 	return &Client{
@@ -133,6 +122,30 @@ func (c *Client) GetUser() (*spotify.PrivateUser, error) {
 		return nil, fmt.Errorf("getting current user: %w", err)
 	}
 	return user, nil
+}
+
+func loginUser() (*spotify.Client, *spotify.PrivateUser, error) {
+	client, err := login()
+	if err != nil {
+		log.Fatalf("Failed to login: %v", err)
+	}
+
+	t, tErr := client.Token()
+	if tErr != nil {
+		log.Fatalf("Failed to get token: %v", tErr)
+	}
+
+	sErr := saveTokenToConfig(t)
+	if sErr != nil {
+		log.Fatalf("Failed to save token: %v", sErr)
+	}
+
+	user, uErr := client.CurrentUser(context.Background())
+	if uErr != nil {
+		return nil, nil, fmt.Errorf("getting current user: %w", uErr)
+	}
+
+	return client, user, nil
 }
 
 func login() (*spotify.Client, error) {
